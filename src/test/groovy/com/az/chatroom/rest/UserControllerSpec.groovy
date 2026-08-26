@@ -3,8 +3,8 @@ package com.az.chatroom.rest
 import com.az.chatroom.dtos.UserCreateRequest
 import com.az.chatroom.dtos.UserPageResponse
 import com.az.chatroom.dtos.UserResponse
+import com.az.chatroom.exceptions.ResourceAlreadyExistsException
 import com.az.chatroom.exceptions.ResourceNotFoundException
-import com.az.chatroom.exceptions.UserAlreadyExistsException
 import com.az.chatroom.services.UserService
 import org.spockframework.spring.SpringBean
 import org.springframework.beans.factory.annotation.Autowired
@@ -68,7 +68,7 @@ class UserControllerSpec extends Specification {
                 .content(userRequestJson))
 
         then:
-        1 * userService.createUser(_) >> { throw new UserAlreadyExistsException(TEST_USERNAME) }
+        1 * userService.createUser(_) >> { throw new ResourceAlreadyExistsException(TEST_USERNAME) }
 
         and:
         result.andExpect(status().isConflict())

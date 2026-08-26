@@ -11,5 +11,8 @@ class TestData {
     public static final UserRole TEST_ROLE = UserRole.USER
     public static final OffsetDateTime TEST_DATE_TIME = OffsetDateTime
             .of(2026, 8, 24, 18, 37, 0, 0,
-                    ZoneOffset.of("+03:00"));
+                    ZoneOffset.of("+03:00"))
+
+    public static final UUID TEST_MESSAGE_ID = UUID.fromString("22222222-2222-2222-2222-222222222222")
+    public static final String TEST_MESSAGE_CONTENT = "random message"
 }

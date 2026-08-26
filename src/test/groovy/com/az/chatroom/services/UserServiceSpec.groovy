@@ -1,8 +1,9 @@
 package com.az.chatroom.services
 
 import com.az.chatroom.dtos.UserCreateRequest
+import com.az.chatroom.exceptions.ResourceAlreadyExistsException
 import com.az.chatroom.exceptions.ResourceNotFoundException
-import com.az.chatroom.exceptions.UserAlreadyExistsException
+import com.az.chatroom.repositories.MessageRepository
 import com.az.chatroom.repositories.UserRepository
 import com.az.generated.jooq.tables.records.AppUserRecord
 import org.springframework.dao.DuplicateKeyException
@@ -17,7 +18,8 @@ import static com.az.chatroom.testutils.UserTestHelper.userRecord
 class UserServiceSpec extends Specification {
 
     UserRepository userRepository = Mock()
-    UserService userService = new UserService(userRepository)
+    MessageRepository messageRepository = Mock()
+    UserService userService = new UserService(userRepository, messageRepository)
 
     def "should store new user and return their generated id"() {
         given:
@@ -51,8 +53,8 @@ class UserServiceSpec extends Specification {
 
         then:
         1 * userRepository.create(_ as AppUserRecord) >> { throw new DuplicateKeyException("duplicate username") }
-        def exception = thrown(UserAlreadyExistsException)
-        exception.message == "Username %s already exists.".formatted(TEST_USERNAME)
+        def exception = thrown(ResourceAlreadyExistsException)
+        exception.message == TEST_USERNAME
         0 * _
     }
 
@@ -61,6 +63,7 @@ class UserServiceSpec extends Specification {
         userService.deleteUser(TEST_USER_ID)
 
         then:
+        1 * messageRepository.anonymizeByUserId(TEST_USER_ID)
         1 * userRepository.delete(TEST_USER_ID) >> true
         noExceptionThrown()
         0 * _
@@ -71,6 +74,7 @@ class UserServiceSpec extends Specification {
         userService.deleteUser(TEST_USER_ID)
 
         then:
+        1 * messageRepository.anonymizeByUserId(TEST_USER_ID)
         1 * userRepository.delete(TEST_USER_ID) >> false
         thrown(ResourceNotFoundException)
         0 * _

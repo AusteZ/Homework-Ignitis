@@ -4,12 +4,14 @@ import com.az.chatroom.dtos.UserCreateRequest;
 import com.az.chatroom.dtos.UserPageResponse;
 import com.az.chatroom.dtos.UserResponse;
 import com.az.chatroom.enums.UserRole;
+import com.az.chatroom.exceptions.ResourceAlreadyExistsException;
 import com.az.chatroom.exceptions.ResourceNotFoundException;
-import com.az.chatroom.exceptions.UserAlreadyExistsException;
+import com.az.chatroom.repositories.MessageRepository;
 import com.az.chatroom.repositories.UserRepository;
 import com.az.generated.jooq.tables.records.AppUserRecord;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -18,9 +20,11 @@ import java.util.UUID;
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final MessageRepository messageRepository;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, MessageRepository messageRepository) {
         this.userRepository = userRepository;
+        this.messageRepository = messageRepository;
     }
 
     public UUID createUser(UserCreateRequest userCreateRequest) {
@@ -36,18 +40,20 @@ public class UserService {
             userRepository.create(user);
             return id;
         } catch (DuplicateKeyException e) {
-            throw new UserAlreadyExistsException(userCreateRequest.username());
+            throw new ResourceAlreadyExistsException(userCreateRequest.username());
         }
     }
 
+    @Transactional
     public void deleteUser(UUID userId) {
+        messageRepository.anonymizeByUserId(userId);
         boolean wasDeleted = userRepository.delete(userId);
         if (!wasDeleted) {
             throw new ResourceNotFoundException("userId not found.");
         }
     }
 
-    public UserPageResponse getUserList(int page, int size){
+    public UserPageResponse getUserList(int page, int size) {
         List<AppUserRecord> records = userRepository.fetchUsers(page, size);
 
         List<UserResponse> users = records.stream()
@@ -67,7 +73,7 @@ public class UserService {
 
     public UserResponse getUser(UUID userId) {
         AppUserRecord appUserRecord = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(""));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return toResponse(appUserRecord);
     }
 
