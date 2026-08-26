@@ -138,6 +138,54 @@ class MessageRepositorySpec extends Specification {
         }
     }
 
+    def "should aggregate statistics for requested user and exclude other messages before joining"() {
+        given:
+        insertUser()
+        def otherUserId = UUID.randomUUID()
+        insertUser(otherUserId, "other")
+        insertMessage(UUID.randomUUID(), TEST_USER_ID, "hey", TEST_DATE_TIME.minusMinutes(2))
+        insertMessage(TEST_MESSAGE_ID, TEST_USER_ID, "hello", TEST_DATE_TIME)
+        insertMessage(UUID.randomUUID(), otherUserId, "other later message", TEST_DATE_TIME.plusMinutes(2))
+        insertMessage(UUID.randomUUID(), null, "anonymous first", TEST_DATE_TIME.minusMinutes(1))
+        insertMessage(UUID.randomUUID(), null, "anonymous last", TEST_DATE_TIME.plusMinutes(1))
+
+        when:
+        def stats = messageRepository.fetchUserMessageStats(TEST_USER_ID)
+
+        then:
+        stats.present
+
+        verifyAll(stats.get()) {
+            username() == TEST_USERNAME
+            messageCount() == 2
+            firstMessageAt() == TEST_DATE_TIME.minusMinutes(2)
+            lastMessageAt() == TEST_DATE_TIME
+            averageMessageLength() == 4
+            lastMessageText() == "hello"
+        }
+    }
+
+    def "should return empty statistics for user with no messages"() {
+        given:
+        insertUser()
+
+        expect:
+        messageRepository.fetchUserMessageStats(TEST_USER_ID).empty
+    }
+
+    def "should return empty statistics for deleted user with anonymized messages"() {
+        given:
+        insertUser()
+        insertMessage(UUID.randomUUID(), TEST_USER_ID, TEST_MESSAGE_CONTENT, TEST_DATE_TIME)
+        messageRepository.anonymizeByUserId(TEST_USER_ID)
+        dsl.deleteFrom(APP_USER)
+                .where(APP_USER.ID.eq(TEST_USER_ID))
+                .execute()
+
+        expect:
+        messageRepository.fetchUserMessageStats(TEST_USER_ID).empty
+    }
+
     private void insertUser(UUID userId = TEST_USER_ID, String username = TEST_USERNAME) {
         dsl.insertInto(APP_USER)
                 .set(UserTestHelper.userRecord(userId, username))
