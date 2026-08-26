@@ -4,6 +4,7 @@ import com.az.chatroom.dtos.UserCreateRequest;
 import com.az.chatroom.dtos.UserPageResponse;
 import com.az.chatroom.dtos.UserResponse;
 import com.az.chatroom.services.UserService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
@@ -22,7 +23,7 @@ import java.util.UUID;
 
 @Validated
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/admin/users")
 public class UserController {
     private final UserService userService;
 
@@ -32,7 +33,7 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UUID createUser(@RequestBody UserCreateRequest createRequest) {
+    public UUID createUser(@Valid @RequestBody UserCreateRequest createRequest) {
         return userService.createUser(createRequest);
     }
 

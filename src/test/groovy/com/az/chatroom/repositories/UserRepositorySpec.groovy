@@ -1,7 +1,6 @@
 package com.az.chatroom.repositories
 
 import com.az.chatroom.testutils.UserTestHelper
-import com.az.generated.jooq.tables.records.AppUserRecord
 import org.jooq.DSLContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.jooq.test.autoconfigure.JooqTest
@@ -12,6 +11,7 @@ import spock.lang.Specification
 import java.time.OffsetDateTime
 
 import static com.az.chatroom.testutils.TestData.TEST_DATE_TIME
+import static com.az.chatroom.testutils.TestData.TEST_PASSWORD_HASH
 import static com.az.chatroom.testutils.TestData.TEST_ROLE
 import static com.az.chatroom.testutils.TestData.TEST_USERNAME
 import static com.az.chatroom.testutils.TestData.TEST_USER_ID
@@ -32,7 +32,7 @@ class UserRepositorySpec extends Specification {
 
     def "should create new user"() {
         given:
-        def user = new AppUserRecord(TEST_USER_ID, TEST_USERNAME, TEST_ROLE_STRING, TEST_DATE_TIME)
+        def user = UserTestHelper.userRecord()
 
         when:
         userRepository.create(user)
@@ -46,6 +46,7 @@ class UserRepositorySpec extends Specification {
             username == TEST_USERNAME
             role == TEST_ROLE_STRING
             createdAt.toInstant() == TEST_DATE_TIME.toInstant()
+            passwordHash == TEST_PASSWORD_HASH
         }
     }
 
@@ -85,6 +86,27 @@ class UserRepositorySpec extends Specification {
             role == TEST_ROLE_STRING
             createdAt.toInstant() == TEST_DATE_TIME.toInstant()
         }
+    }
+
+    def "should find user by username"() {
+        given:
+        insertUser()
+
+        when:
+        def result = userRepository.findByUsername(TEST_USERNAME)
+
+        then:
+        result.present
+        result.get().id == TEST_USER_ID
+    }
+
+    def "should check whether user exists by username"() {
+        given:
+        insertUser()
+
+        expect:
+        userRepository.existsByUsername(TEST_USERNAME)
+        !userRepository.existsByUsername("missing")
     }
 
     def "should fetch one extra user in expected order for next page detection"() {

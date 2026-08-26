@@ -1,3 +1,5 @@
+import org.jooq.meta.jaxb.Property
+
 plugins {
     id 'java'
     id 'groovy'
@@ -26,6 +28,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-jooq'
     jooqCodegen 'org.jooq:jooq-meta-extensions:3.21.7'
     implementation 'org.springframework.boot:spring-boot-starter-liquibase'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0'
@@ -52,18 +56,14 @@ jooq {
         generator {
             database {
                 name = 'org.jooq.meta.extensions.ddl.DDLDatabase'
-
-                properties {
-                    property {
-                        key = 'scripts'
-                        value = 'src/main/resources/db/changelog/changes/*.sql'
-                    }
-
-                    property {
-                        key = 'sort'
-                        value = 'alphanumeric'
-                    }
-                }
+                withProperties(
+                        new Property()
+                                .withKey('scripts')
+                                .withValue('src/main/resources/db/changelog/changes/*.sql'),
+                        new Property()
+                                .withKey('sort')
+                                .withValue('alphanumeric')
+                )
             }
 
             target {

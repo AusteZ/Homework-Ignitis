@@ -10,6 +10,7 @@ import com.az.chatroom.repositories.MessageRepository;
 import com.az.chatroom.repositories.UserRepository;
 import com.az.generated.jooq.tables.records.AppUserRecord;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,20 +22,23 @@ import java.util.UUID;
 public class UserService {
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, MessageRepository messageRepository) {
+    public UserService(UserRepository userRepository, MessageRepository messageRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.messageRepository = messageRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public UUID createUser(UserCreateRequest userCreateRequest) {
         UUID id = UUID.randomUUID();
         OffsetDateTime createdAt = OffsetDateTime.now();
-        AppUserRecord user = new AppUserRecord(
-                id,
-                userCreateRequest.username(),
-                userCreateRequest.role().name(),
-                createdAt);
+        AppUserRecord user = new AppUserRecord();
+        user.setId(id);
+        user.setUsername(userCreateRequest.username());
+        user.setRole(userCreateRequest.role().name());
+        user.setCreatedAt(createdAt);
+        user.setPasswordHash(passwordEncoder.encode(userCreateRequest.password()));
 
         try {
             userRepository.create(user);

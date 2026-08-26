@@ -26,11 +26,11 @@ public class MessageService {
         this.messageRepository = messageRepository;
     }
 
-    public UUID createMessage(MessageCreateRequest request) {
+    public UUID createMessage(UUID userId, MessageCreateRequest request) {
         UUID messageId = UUID.randomUUID();
         ChatMessageRecord message = new ChatMessageRecord(
                 messageId,
-                request.userId(),
+                userId,
                 request.content(),
                 OffsetDateTime.now()
         );

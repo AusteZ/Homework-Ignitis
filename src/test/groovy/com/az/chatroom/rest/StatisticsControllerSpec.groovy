@@ -19,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(StatisticsController)
 @AutoConfigureMockMvc(addFilters = false)
 class StatisticsControllerSpec extends Specification {
+    private static final String API_PATH = "/api/admin/statistics"
 
     @Autowired
     MockMvc mockMvc
@@ -28,7 +29,7 @@ class StatisticsControllerSpec extends Specification {
 
     def "should return OK and user message statistics"() {
         when:
-        def result = mockMvc.perform(MockMvcRequestBuilders.get("/api/statistics/{userId}", TEST_USER_ID))
+        def result = mockMvc.perform(MockMvcRequestBuilders.get("${API_PATH}/{userId}", TEST_USER_ID))
 
         then:
         1 * statisticsService.getUserMessageStats(TEST_USER_ID) >>
@@ -50,7 +51,7 @@ class StatisticsControllerSpec extends Specification {
 
     def "should return NOT FOUND when user statistics are not found"() {
         when:
-        def result = mockMvc.perform(MockMvcRequestBuilders.get("/api/statistics/{userId}", TEST_USER_ID))
+        def result = mockMvc.perform(MockMvcRequestBuilders.get("${API_PATH}/{userId}", TEST_USER_ID))
 
         then:
         1 * statisticsService.getUserMessageStats(TEST_USER_ID) >> {

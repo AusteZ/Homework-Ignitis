@@ -7,9 +7,12 @@ import com.az.chatroom.repositories.MessageRepository
 import com.az.chatroom.repositories.UserRepository
 import com.az.generated.jooq.tables.records.AppUserRecord
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.security.crypto.password.PasswordEncoder
 import spock.lang.Specification
 
 import static com.az.chatroom.testutils.TestData.TEST_DATE_TIME
+import static com.az.chatroom.testutils.TestData.TEST_PASSWORD
+import static com.az.chatroom.testutils.TestData.TEST_PASSWORD_HASH
 import static com.az.chatroom.testutils.TestData.TEST_ROLE
 import static com.az.chatroom.testutils.TestData.TEST_USERNAME
 import static com.az.chatroom.testutils.TestData.TEST_USER_ID
@@ -19,17 +22,19 @@ class UserServiceSpec extends Specification {
 
     UserRepository userRepository = Mock()
     MessageRepository messageRepository = Mock()
-    UserService userService = new UserService(userRepository, messageRepository)
+    PasswordEncoder passwordEncoder = Mock()
+    UserService userService = new UserService(userRepository, messageRepository, passwordEncoder)
 
     def "should store new user and return their generated id"() {
         given:
-        def request = new UserCreateRequest(TEST_USERNAME, TEST_ROLE)
+        def request = new UserCreateRequest(TEST_USERNAME, TEST_PASSWORD, TEST_ROLE)
         AppUserRecord savedUser = null
 
         when:
         def userId = userService.createUser(request)
 
         then:
+        1 * passwordEncoder.encode(TEST_PASSWORD) >> TEST_PASSWORD_HASH
         1 * userRepository.create(_ as AppUserRecord) >> { AppUserRecord user ->
             savedUser = user
         }
@@ -39,6 +44,7 @@ class UserServiceSpec extends Specification {
             username == TEST_USERNAME
             role == TEST_ROLE.name()
             createdAt != null
+            passwordHash == TEST_PASSWORD_HASH
         }
 
         0 * _
@@ -46,12 +52,13 @@ class UserServiceSpec extends Specification {
 
     def "should translate duplicate username into domain exception"() {
         given:
-        def request = new UserCreateRequest(TEST_USERNAME, TEST_ROLE)
+        def request = new UserCreateRequest(TEST_USERNAME, TEST_PASSWORD, TEST_ROLE)
 
         when:
         userService.createUser(request)
 
         then:
+        1 * passwordEncoder.encode(TEST_PASSWORD) >> TEST_PASSWORD_HASH
         1 * userRepository.create(_ as AppUserRecord) >> { throw new DuplicateKeyException("duplicate username") }
         def exception = thrown(ResourceAlreadyExistsException)
         exception.message == TEST_USERNAME

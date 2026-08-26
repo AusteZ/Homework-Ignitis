@@ -17,6 +17,7 @@ import spock.lang.Specification
 import tools.jackson.databind.ObjectMapper
 
 import static com.az.chatroom.testutils.TestData.TEST_DATE_TIME
+import static com.az.chatroom.testutils.TestData.TEST_PASSWORD
 import static com.az.chatroom.testutils.TestData.TEST_ROLE
 import static com.az.chatroom.testutils.TestData.TEST_USERNAME
 import static com.az.chatroom.testutils.TestData.TEST_USER_ID
@@ -27,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(UserController)
 @AutoConfigureMockMvc(addFilters = false)
 class UserControllerSpec extends Specification {
+    private static final String API_PATH = "/api/admin/users"
 
     @Autowired
     MockMvc mockMvc
@@ -39,17 +41,17 @@ class UserControllerSpec extends Specification {
 
     def "should return CREATED with created user id"() {
         given:
-        def userRequest = new UserCreateRequest(TEST_USERNAME, TEST_ROLE)
+        def userRequest = new UserCreateRequest(TEST_USERNAME, TEST_PASSWORD, TEST_ROLE)
         def userRequestJson = objectMapper.writeValueAsString(userRequest)
 
         when:
-        def result = mockMvc.perform(MockMvcRequestBuilders.post("/api/users")
+        def result = mockMvc.perform(MockMvcRequestBuilders.post(API_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(userRequestJson))
 
         then:
         1 * userService.createUser({ request ->
-            request.username() == TEST_USERNAME && request.role() == TEST_ROLE
+            request.username() == TEST_USERNAME && request.password() == TEST_PASSWORD && request.role() == TEST_ROLE
         }) >> TEST_USER_ID
 
         and:
@@ -59,11 +61,11 @@ class UserControllerSpec extends Specification {
 
     def "should return CONFLICT when username already exists"() {
         given:
-        def userRequest = new UserCreateRequest(TEST_USERNAME, TEST_ROLE)
+        def userRequest = new UserCreateRequest(TEST_USERNAME, TEST_PASSWORD, TEST_ROLE)
         def userRequestJson = objectMapper.writeValueAsString(userRequest)
 
         when:
-        def result = mockMvc.perform(MockMvcRequestBuilders.post("/api/users")
+        def result = mockMvc.perform(MockMvcRequestBuilders.post(API_PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(userRequestJson))
 
@@ -77,7 +79,7 @@ class UserControllerSpec extends Specification {
 
     def "should return NO CONTENT after deleting user"() {
         when:
-        def result = mockMvc.perform(MockMvcRequestBuilders.delete("/api/users/{userId}", TEST_USER_ID))
+        def result = mockMvc.perform(MockMvcRequestBuilders.delete("${API_PATH}/{userId}", TEST_USER_ID))
 
         then:
         1 * userService.deleteUser(TEST_USER_ID)
@@ -88,7 +90,7 @@ class UserControllerSpec extends Specification {
 
     def "should return OK and found user"() {
         when:
-        def result = mockMvc.perform(MockMvcRequestBuilders.get("/api/users/{userId}", TEST_USER_ID))
+        def result = mockMvc.perform(MockMvcRequestBuilders.get("${API_PATH}/{userId}", TEST_USER_ID))
 
         then:
         1 * userService.getUser(TEST_USER_ID) >> new UserResponse(TEST_USER_ID, TEST_USERNAME, TEST_ROLE, TEST_DATE_TIME)
@@ -102,7 +104,7 @@ class UserControllerSpec extends Specification {
 
     def "should return NOT FOUND when user not found"() {
         when:
-        def result = mockMvc.perform(MockMvcRequestBuilders.get("/api/users/{userId}", TEST_USER_ID))
+        def result = mockMvc.perform(MockMvcRequestBuilders.get("${API_PATH}/{userId}", TEST_USER_ID))
 
         then:
         1 * userService.getUser(TEST_USER_ID) >> { throw new ResourceNotFoundException("missing") }
@@ -119,7 +121,7 @@ class UserControllerSpec extends Specification {
         def response = [new UserResponse(TEST_USER_ID, TEST_USERNAME, TEST_ROLE, TEST_DATE_TIME)]
 
         when:
-        def result = mockMvc.perform(MockMvcRequestBuilders.get("/api/users")
+        def result = mockMvc.perform(MockMvcRequestBuilders.get(API_PATH)
                 .param("page", page.toString())
                 .param("size", givenSize.toString()))
 

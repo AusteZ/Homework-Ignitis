@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/admin/statistics")
 @Validated
 public class StatisticsController {
     private final StatisticsService statisticsService;
@@ -23,7 +23,7 @@ public class StatisticsController {
         this.statisticsService = statisticsService;
     }
 
-    @GetMapping("/statistics/{userId}")
+    @GetMapping("/{userId}")
     @ResponseStatus(HttpStatus.OK)
     public StatisticsResponse getUserMessageStats(@PathVariable @NotNull UUID userId) {
         return statisticsService.getUserMessageStats(userId);

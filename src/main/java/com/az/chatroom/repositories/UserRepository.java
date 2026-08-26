@@ -41,6 +41,19 @@ public class UserRepository {
                 .fetch();
     }
 
+    public Optional<AppUserRecord> findByUsername(String username) {
+        return dsl.selectFrom(APP_USER)
+                .where(APP_USER.USERNAME.eq(username))
+                .fetchOptional();
+    }
+
+    public boolean existsByUsername(String username) {
+        return dsl.fetchExists(
+                APP_USER,
+                APP_USER.USERNAME.eq(username)
+        );
+    }
+
     public Optional<AppUserRecord> findById(UUID uuid) {
         return dsl.selectFrom(APP_USER)
                 .where(APP_USER.ID.eq(uuid))

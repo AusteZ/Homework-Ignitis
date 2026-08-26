@@ -26,11 +26,11 @@ class MessageServiceSpec extends Specification {
 
     def "should store new message and return generated id"() {
         given:
-        def request = new MessageCreateRequest(TEST_USER_ID, TEST_MESSAGE_CONTENT)
+        def request = new MessageCreateRequest(TEST_MESSAGE_CONTENT)
         ChatMessageRecord savedMessage = null
 
         when:
-        def messageId = messageService.createMessage(request)
+        def messageId = messageService.createMessage(TEST_USER_ID, request)
 
         then:
         1 * messageRepository.create(_ as ChatMessageRecord) >> { ChatMessageRecord message ->
@@ -49,10 +49,10 @@ class MessageServiceSpec extends Specification {
 
     def "should reject message from missing user"() {
         given:
-        def request = new MessageCreateRequest(TEST_USER_ID, TEST_MESSAGE_CONTENT)
+        def request = new MessageCreateRequest(TEST_MESSAGE_CONTENT)
 
         when:
-        messageService.createMessage(request)
+        messageService.createMessage(TEST_USER_ID, request)
 
         then:
         1 * messageRepository.create(_ as ChatMessageRecord) >> { throw new DataIntegrityViolationException("missing user") }
@@ -63,7 +63,7 @@ class MessageServiceSpec extends Specification {
     def "should return messages newest first and mark deleted users anonymous"() {
         given:
         def requestedSize = 2
-        def latest = messageRow(TEST_MESSAGE_ID, null, "anonymous text", TEST_DATE_TIME)
+        def latest = messageRow(TEST_MESSAGE_ID, null, "some text from before", TEST_DATE_TIME)
         def older = messageRow(UUID.randomUUID(), TEST_USERNAME, TEST_MESSAGE_CONTENT, TEST_DATE_TIME.minusMinutes(1))
         def extra = messageRow(UUID.randomUUID(), TEST_USERNAME, "extra", TEST_DATE_TIME.minusMinutes(2))
 
@@ -76,7 +76,7 @@ class MessageServiceSpec extends Specification {
             size() == requestedSize
             nextCursor() != null
             messages()*.username() == ["anonymous", TEST_USERNAME]
-            messages()*.content() == ["anonymous text", TEST_MESSAGE_CONTENT]
+            messages()*.content() == ["some text from before", TEST_MESSAGE_CONTENT]
         }
         0 * _
     }

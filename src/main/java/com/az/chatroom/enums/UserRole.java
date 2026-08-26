@@ -2,5 +2,9 @@ package com.az.chatroom.enums;
 
 public enum UserRole {
     ADMIN,
-    USER
+    USER;
+
+    public String authority() {
+        return name();
+    }
 }
