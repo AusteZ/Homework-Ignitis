@@ -1,1 +1,3 @@
 rootProject.name = 'Homework-Ignitis'
+include 'chatroom'
+include 'automated-tests'
