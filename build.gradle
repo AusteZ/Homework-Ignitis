@@ -1,87 +1,14 @@
 plugins {
-    id 'java'
-    id 'groovy'
-    id 'org.springframework.boot' version '4.1.1'
-    id 'io.spring.dependency-management' version '1.1.7'
-    id 'org.jooq.jooq-codegen-gradle' version '3.21.7'
+    id 'org.springframework.boot' version '4.1.1' apply false
+    id 'io.spring.dependency-management' version '1.1.7' apply false
+    id 'org.jooq.jooq-codegen-gradle' version '3.21.7' apply false
 }
 
-group = 'com.az'
-version = '0.0.1-SNAPSHOT'
-description = 'Homework-Ignitis'
+allprojects {
+    group = 'com.az'
+    version = '0.0.1-SNAPSHOT'
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+    repositories {
+        mavenCentral()
     }
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-h2console'
-    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
-    implementation 'org.springframework.boot:spring-boot-starter-jooq'
-    jooqCodegen 'org.jooq:jooq-meta-extensions:3.21.7'
-    implementation 'org.springframework.boot:spring-boot-starter-liquibase'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0'
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
-    runtimeOnly 'com.h2database:h2'
-    testImplementation 'org.springframework.boot:spring-boot-starter-jdbc-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-jooq-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-liquibase-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-    testImplementation 'org.apache.groovy:groovy:4.0.27'
-    testImplementation 'org.spockframework:spock-core:2.4-M6-groovy-4.0'
-    testImplementation 'org.spockframework:spock-spring:2.4-M6-groovy-4.0'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-configurations.configureEach {
-    resolutionStrategy.force 'org.apache.groovy:groovy:4.0.27'
-}
-
-jooq {
-    configuration {
-        generator {
-            database {
-                name = 'org.jooq.meta.extensions.ddl.DDLDatabase'
-
-                properties {
-                    property {
-                        key = 'scripts'
-                        value = 'src/main/resources/db/changelog/changes/*.sql'
-                    }
-
-                    property {
-                        key = 'sort'
-                        value = 'alphanumeric'
-                    }
-                }
-            }
-
-            target {
-                packageName = 'com.az.generated.jooq'
-                directory = 'build/generated-src/jooq'
-            }
-        }
-    }
-}
-
-tasks.named('jooqCodegen') {
-    inputs.files(fileTree('src/main/resources/db/changelog'))
-}
-
-tasks.named('compileJava') {
-    dependsOn(tasks.named('jooqCodegen'))
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
 }

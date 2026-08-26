@@ -1,0 +1,85 @@
+import org.jooq.meta.jaxb.Property
+
+plugins {
+    id 'java'
+    id 'groovy'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+    id 'org.jooq.jooq-codegen-gradle'
+}
+
+description = 'Chatroom backend application'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-h2console'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-jooq'
+    jooqCodegen 'org.jooq:jooq-meta-extensions:3.21.7'
+    implementation 'org.springframework.boot:spring-boot-starter-liquibase'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly 'com.h2database:h2'
+    testImplementation 'org.springframework.boot:spring-boot-starter-jdbc-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-jooq-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-liquibase-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.apache.groovy:groovy:4.0.27'
+    testImplementation 'org.spockframework:spock-core:2.4-M6-groovy-4.0'
+    testImplementation 'org.spockframework:spock-spring:2.4-M6-groovy-4.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+configurations.configureEach {
+    resolutionStrategy.force 'org.apache.groovy:groovy:4.0.27'
+}
+
+jooq {
+    configuration {
+        generator {
+            database {
+                name = 'org.jooq.meta.extensions.ddl.DDLDatabase'
+                withProperties(
+                        new Property()
+                                .withKey('scripts')
+                                .withValue('src/main/resources/db/changelog/changes/*.sql'),
+                        new Property()
+                                .withKey('sort')
+                                .withValue('alphanumeric')
+                )
+            }
+
+            target {
+                packageName = 'com.az.generated.jooq'
+                directory = 'build/generated-src/jooq'
+            }
+        }
+    }
+}
+
+tasks.named('jooqCodegen') {
+    inputs.files(fileTree('src/main/resources/db/changelog'))
+}
+
+tasks.named('compileJava') {
+    dependsOn(tasks.named('jooqCodegen'))
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.named('bootJar') {
+    archiveFileName = 'chatroom.jar'
+}
