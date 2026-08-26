@@ -4,7 +4,8 @@ import com.az.chatroom.testutils.UserTestHelper
 import com.az.generated.jooq.tables.records.AppUserRecord
 import org.jooq.DSLContext
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.jooq.test.autoconfigure.JooqTest
+import org.springframework.context.annotation.Import
 import org.springframework.transaction.annotation.Transactional
 import spock.lang.Specification
 
@@ -16,7 +17,8 @@ import static com.az.chatroom.testutils.TestData.TEST_USERNAME
 import static com.az.chatroom.testutils.TestData.TEST_USER_ID
 import static com.az.generated.jooq.Tables.APP_USER
 
-@SpringBootTest
+@JooqTest
+@Import(UserRepository)
 @Transactional
 class UserRepositorySpec extends Specification {
 
